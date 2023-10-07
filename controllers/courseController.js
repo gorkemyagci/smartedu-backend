@@ -126,3 +126,42 @@ exports.releaseCourse = async (req, res) => {
         });
     }
 }
+
+exports.deleteCourse = async (req, res) => {
+    try {
+        const course = await Course.findOneAndDelete({ slug: req.params.slug });
+        const usersToPull = await User.find({ courses: course._id });
+        usersToPull.forEach(async user => {
+            await user.courses.pull({ _id: course._id });
+            await user.save();
+        });
+        res.status(200).json({
+            status: 'success',
+            data: {
+                course
+            }
+        });
+    } catch (err) {
+        res.status(400).json({
+            status: 'fail',
+            msg: err.message
+        });
+    }
+}
+
+exports.updateCourse = async (req, res) => {
+    try {
+        const course = await Course.findOneAndUpdate({ slug: req.params.slug }, req.body, { new: true });
+        res.status(200).json({
+            status: 'success',
+            data: {
+                course
+            }
+        });
+    } catch (err) {
+        res.status(400).json({
+            status: 'fail',
+            msg: err.message
+        });
+    }
+}
